@@ -1,26 +1,72 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: #f3f4f5;
+  color: #0f1111;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  -webkit-text-size-adjust: 100%;
 }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f3f4f5; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+
+button:hover { opacity: 0.85; }
+button { touch-action: manipulation; }
+
+input:focus {
+  border-color: #FF9900 !important;
+  box-shadow: 0 0 0 2px #FF990033;
+  outline: none;
+}
+
+/* ── Responsive table wrapper — horizontal scroll on small screens ── */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── SVG charts scroll on mobile ── */
+.chart-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Hide on mobile ── */
+@media (max-width: 640px) {
+  .hide-mobile { display: none !important; }
+}
+
+/* ── Hide on tablet and below ── */
+@media (max-width: 768px) {
+  .hide-tablet { display: none !important; }
+}
+
+/* ── Tap targets — min 44px on mobile ── */
+@media (max-width: 768px) {
+  button {
+    min-height: 36px;
+  }
+  select {
+    min-height: 36px;
+    font-size: 16px !important; /* prevents iOS zoom on focus */
+  }
+  input {
+    font-size: 16px !important; /* prevents iOS zoom on focus */
+  }
+}
+
+/* ── Nav scrolls horizontally on small screens ── */
+.nav-tabs {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
