@@ -755,12 +755,13 @@ export default function Home() {
         padding: '0 12px',
         display: 'flex',
         alignItems: 'center',
-        minHeight: 54,
-        gap: 12,
+        height: 52,
+        gap: 10,
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        flexWrap: 'wrap',
+        flexWrap: 'nowrap',
+        overflow: 'hidden',
       }}>
         {/* Logo */}
         <div
@@ -790,7 +791,7 @@ Dynasty<span style={{ color: C.orange }}>Solved</span>
         {/* Year selector — shown in portfolio */}
         {screen === 'portfolio' && !loading && worpYear && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 12 }}>
-            <span style={{ color: '#6b7280', fontSize: 12 }}>WORP season:</span>
+            <span className="hide-mobile" style={{ color: '#6b7280', fontSize: 12 }}>WORP season:</span>
             <select
               value={worpYear}
               onChange={e => handleYearChange(Number(e.target.value))}
@@ -813,10 +814,11 @@ Dynasty<span style={{ color: C.orange }}>Solved</span>
           </div>
         )}
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, alignItems: 'center' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }}>
           {screen === 'portfolio' && (
             <button onClick={() => setScreen('dashboard')} style={navBtn}>
-              ← My Leagues
+              <span className="hide-mobile">← My Leagues</span>
+              <span className="show-mobile-only">←</span>
             </button>
           )}
           {screen !== 'login' && (
@@ -827,7 +829,8 @@ Dynasty<span style={{ color: C.orange }}>Solved</span>
               setRosterPlayers([]);
               setUsernameInput('');
             }} style={navBtn}>
-              Sign Out
+              <span className="hide-mobile">Sign Out</span>
+              <span className="show-mobile-only">✕</span>
             </button>
           )}
         </div>
@@ -1600,11 +1603,11 @@ function LeagueStandingsView({ standings, myUserId }) {
             ))}
           </div>
 
-          {/* Column headers — scrollable on mobile */}
-          <div className="table-scroll">
+          {/* Column headers — desktop only */}
+          <div className="hide-mobile">
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '36px 1fr 100px 90px 1fr 80px', 
+            gridTemplateColumns: '36px 1fr 100px 90px 1fr 80px',
             gap: 10, padding: '6px 16px',
             fontSize: 11, fontWeight: 700, color: C.textMid, textTransform: 'uppercase', letterSpacing: 0.5,
           }}>
@@ -1626,78 +1629,79 @@ function LeagueStandingsView({ standings, myUserId }) {
               const key = `${league_id}-${team.roster_id}`;
               const expanded = expandedTeam === key;
               const isMe = team.is_me;
+              const tierPills = Object.entries(TIER_CONFIG).filter(([t]) => t !== 'Unranked').map(([tier, cfg]) => {
+                const count = team.players.filter(p => p.worp !== null && p.tier_label === tier).length;
+                if (count === 0) return null;
+                return (
+                  <span key={tier} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, backgroundColor: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`, borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 700 }}>
+                    {count} <span style={{ fontWeight: 400, fontSize: 10 }}>{tier === 'Cut Candidate' ? 'Cut' : tier}</span>
+                  </span>
+                );
+              });
+              const rankEmoji = displayRank === 1 ? '🥇' : displayRank === 2 ? '🥈' : displayRank === 3 ? '🥉' : null;
+              const borderColor = isMe ? C.orange : displayRank === 1 ? '#FFD700' : displayRank === 2 ? '#C0C0C0' : displayRank === 3 ? '#CD7F32' : C.border;
               return (
                 <div key={key}>
                   {/* Team row */}
-                  <div
-                    onClick={() => setExpandedTeam(expanded ? null : key)}
-                    style={{
+                  <div onClick={() => setExpandedTeam(expanded ? null : key)} style={{
+                    backgroundColor: isMe ? '#fffbf0' : C.white,
+                    border: `1px solid ${isMe ? C.orange + '88' : C.border}`,
+                    borderLeft: `4px solid ${borderColor}`,
+                    borderRadius: 6, cursor: 'pointer', transition: 'background 0.1s',
+                  }}>
+                    {/* Mobile card layout */}
+                    <div className="show-mobile-only" style={{ padding: '12px 12px 10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontWeight: 700, fontSize: 16, minWidth: 28 }}>{rankEmoji || displayRank}</span>
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontWeight: 700, fontSize: 15, color: C.textDark }}>{team.display_name}</span>
+                              {isMe && <span style={{ fontSize: 10, backgroundColor: C.orange + '33', color: '#92400e', border: `1px solid ${C.orange}88`, borderRadius: 10, padding: '1px 6px', fontWeight: 600 }}>You</span>}
+                            </div>
+                            {team.team_name && <div style={{ fontSize: 11, color: C.textLight }}>{team.team_name}</div>}
+                          </div>
+                        </div>
+                        <span style={{ color: C.textLight, fontSize: 18, transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</span>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+                        <div style={{ backgroundColor: C.pageBg, borderRadius: 6, padding: '6px 10px' }}>
+                          <div style={{ fontWeight: 700, fontSize: 17, color: team.startingWorp >= 8 ? C.green : team.startingWorp >= 4 ? C.blue : C.textDark }}>{team.startingWorp.toFixed(2)}</div>
+                          <div style={{ fontSize: 10, color: C.textLight }}>Starting WORP</div>
+                        </div>
+                        <div style={{ backgroundColor: C.pageBg, borderRadius: 6, padding: '6px 10px' }}>
+                          <div style={{ fontWeight: 700, fontSize: 17, color: team.totalFcValue > 0 ? '#c45500' : C.textLight }}>{team.totalFcValue > 0 ? (team.totalFcValue/1000).toFixed(1)+'k' : '—'}</div>
+                          <div style={{ fontSize: 10, color: C.textLight }}>FC Value</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>{tierPills}</div>
+                    </div>
+                    {/* Desktop grid layout */}
+                    <div className="hide-mobile" style={{
                       display: 'grid',
-                      gridTemplateColumns: '36px 1fr 100px 90px 1fr 80px', 
-                      gap: 10, alignItems: 'center',
-                      padding: '13px 16px',
-                      backgroundColor: isMe ? '#fffbf0' : C.white,
-                      border: `1px solid ${isMe ? C.orange + '88' : C.border}`,
-                      borderLeft: `4px solid ${isMe ? C.orange : team.rank === 1 ? '#FFD700' : team.rank === 2 ? '#C0C0C0' : team.rank === 3 ? '#CD7F32' : C.border}`,
-                      borderRadius: 6,
-                      cursor: 'pointer',
-                      transition: 'background 0.1s',
-                    }}
-                  >
-                    {/* Rank */}
-                    <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 15,
-                      color: displayRank === 1 ? '#b45309' : displayRank <= 3 ? C.textMid : C.textLight }}>
-                      {displayRank === 1 ? '🥇' : displayRank === 2 ? '🥈' : displayRank === 3 ? '🥉' : displayRank}
-                    </div>
-
-                    {/* Manager */}
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontWeight: 700, fontSize: 14, color: C.textDark }}>{team.display_name}</span>
-                        {isMe && <span style={{ fontSize: 10, backgroundColor: C.orange + '33', color: '#92400e', border: `1px solid ${C.orange}88`, borderRadius: 10, padding: '1px 7px', fontWeight: 600 }}>You</span>}
+                      gridTemplateColumns: '36px 1fr 100px 90px 1fr 80px',
+                      gap: 10, alignItems: 'center', padding: '13px 16px',
+                    }}>
+                      <div style={{ textAlign: 'center', fontWeight: 700, fontSize: 15, color: displayRank === 1 ? '#b45309' : displayRank <= 3 ? C.textMid : C.textLight }}>
+                        {rankEmoji || displayRank}
                       </div>
-                      {team.team_name && <div style={{ fontSize: 11, color: C.textLight }}>{team.team_name}</div>}
-                    </div>
-
-                    {/* Starting WORP */}
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 700, fontSize: 16, color: team.startingWorp >= 8 ? C.green : team.startingWorp >= 4 ? C.blue : C.textDark }}>
-                        {team.startingWorp.toFixed(2)}
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <span style={{ fontWeight: 700, fontSize: 14, color: C.textDark }}>{team.display_name}</span>
+                          {isMe && <span style={{ fontSize: 10, backgroundColor: C.orange + '33', color: '#92400e', border: `1px solid ${C.orange}88`, borderRadius: 10, padding: '1px 7px', fontWeight: 600 }}>You</span>}
+                        </div>
+                        {team.team_name && <div style={{ fontSize: 11, color: C.textLight }}>{team.team_name}</div>}
                       </div>
-                    </div>
-
-                    {/* FC Roster Value */}
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontWeight: 700, fontSize: 16, color: team.totalFcValue > 0 ? '#c45500' : C.textLight }}>
-                        {team.totalFcValue > 0 ? (team.totalFcValue / 1000).toFixed(1) + 'k' : '—'}
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: 700, fontSize: 16, color: team.startingWorp >= 8 ? C.green : team.startingWorp >= 4 ? C.blue : C.textDark }}>{team.startingWorp.toFixed(2)}</div>
                       </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: 700, fontSize: 16, color: team.totalFcValue > 0 ? '#c45500' : C.textLight }}>{team.totalFcValue > 0 ? (team.totalFcValue/1000).toFixed(1)+'k' : '—'}</div>
+                      </div>
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>{tierPills}</div>
+                      <div style={{ textAlign: 'right', color: C.textMid, fontSize: 13 }}>{team.playerCount}</div>
+                      <div style={{ textAlign: 'right', color: C.textLight, fontSize: 16, transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</div>
                     </div>
-
-                    {/* Tier breakdown strip */}
-                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
-                      {Object.entries(TIER_CONFIG).filter(([t]) => t !== 'Unranked').map(([tier, cfg]) => {
-                        const count = team.players.filter(p => p.worp !== null && p.tier_label === tier).length;
-                        if (count === 0) return null;
-                        return (
-                          <span key={tier} style={{
-                            display: 'inline-flex', alignItems: 'center', gap: 3,
-                            backgroundColor: cfg.bg, color: cfg.color,
-                            border: `1px solid ${cfg.border}`,
-                            borderRadius: 10, padding: '1px 7px', fontSize: 11, fontWeight: 700,
-                          }}>
-                            {count} <span style={{ fontWeight: 400, fontSize: 10 }}>{tier === 'Cut Candidate' ? 'Cut' : tier}</span>
-                          </span>
-                        );
-                      })}
-                    </div>
-
-                    {/* Roster size */}
-                    <div style={{ textAlign: 'right', color: C.textMid, fontSize: 13 }}>
-                      {team.playerCount}
-                    </div>
-
-                    {/* Expand chevron */}
-                    <div style={{ textAlign: 'right', color: C.textLight, fontSize: 16, transform: expanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s' }}>›</div>
                   </div>
 
                   {/* Expanded roster */}

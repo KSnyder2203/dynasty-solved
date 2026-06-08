@@ -52,6 +52,12 @@ input:focus {
   .hide-mobile { display: none !important; }
 }
 
+/* ── Show only on mobile ── */
+.show-mobile-only { display: none; }
+@media (max-width: 640px) {
+  .show-mobile-only { display: inline !important; }
+}
+
 /* ── Hide on tablet and below ── */
 @media (max-width: 768px) {
   .hide-tablet { display: none !important; }
