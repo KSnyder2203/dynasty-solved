@@ -1619,6 +1619,7 @@ function LeagueStandingsView({ standings, myUserId }) {
             <div style={{ textAlign: 'right' }}>Roster</div>
             <div style={{ textAlign: 'right' }}></div>
           </div>
+          </div>{/* hide-mobile */}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             {[...teams].sort((a, b) => standingsSort === 'fc'
@@ -1784,7 +1785,6 @@ function LeagueStandingsView({ standings, myUserId }) {
               );
             })}
           </div>
-          </div>{/* table-scroll */}
         </div>
       ))}
     </div>
@@ -1926,10 +1926,8 @@ function FCValueTab({ dynastyList, rosterPlayers, rosterNameSet, activeLeague })
 
       {/* ── TABLE VIEW ─────────────────────────────────────── */}
       {fcView === 'table' && (<>
-        <div className="table-scroll">
-        <div style={{
+        <div className="hide-mobile" style={{
           display: 'grid', gridTemplateColumns: '44px 2fr 70px 60px 80px 80px 70px 70px',
-          minWidth: 640,
           gap: 10, padding: '6px 16px',
           fontSize: 11, fontWeight: 700, color: C.textMid, textTransform: 'uppercase', letterSpacing: 0.5,
         }}>
@@ -1942,6 +1940,7 @@ function FCValueTab({ dynastyList, rosterPlayers, rosterNameSet, activeLeague })
           <div style={{ textAlign: 'right' }}>WORP</div>
           <div style={{ textAlign: 'right' }}>Pos Rank</div>
         </div>
+        <div className="table-scroll">
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 640 }}>
           {combined.map(p => {
@@ -1953,7 +1952,7 @@ function FCValueTab({ dynastyList, rosterPlayers, rosterNameSet, activeLeague })
           })}
           {combined.length === 0 && <EmptyState />}
         </div>
-        </div>{/* table-scroll */}
+        </div>
       </>)}
 
       {/* ── CHART VIEW: Value vs WORP ──────────────────────── */}
@@ -1989,6 +1988,46 @@ function FCPlayerRow({ player, globalRank, owned, worp }) {
   const posColor = POS_COLOR[player.pos] || C.textMid;
   const posBg    = POS_BG[player.pos]   || '#f9fafb';
   const trendColor = player.fc_trend > 0 ? C.green : player.fc_trend < 0 ? C.red : C.textLight;
+  const isMobile = useWindowWidth() < 640;
+
+  if (isMobile) {
+    return (
+      <div style={{
+        backgroundColor: owned ? '#f0fdf4' : C.white,
+        border: `1px solid ${owned ? '#86efac' : C.border}`,
+        borderLeft: `3px solid ${posColor || C.orange}`,
+        borderRadius: 6, padding: '10px 12px',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 11, color: C.textLight, minWidth: 24 }}>#{globalRank}</span>
+              <span style={{ fontWeight: owned ? 700 : 500, fontSize: 15, color: C.textDark }}>{player.name}</span>
+              {owned && <span style={{ fontSize: 10, backgroundColor: '#dcfce7', color: '#15803d', border: '1px solid #86efac', borderRadius: 10, padding: '1px 6px', fontWeight: 600 }}>Owned</span>}
+            </div>
+            <div style={{ display: 'flex', gap: 5, marginTop: 3, alignItems: 'center' }}>
+              {!player.is_pick && <span style={{ backgroundColor: posBg, color: posColor, fontWeight: 700, fontSize: 11, padding: '1px 6px', borderRadius: 3 }}>{player.pos}</span>}
+              {player.team && <span style={{ fontSize: 12, color: C.textMid }}>{player.team}</span>}
+              {player.age && <span style={{ fontSize: 11, color: player.age <= 23 ? C.green : player.age >= 29 ? C.red : C.textLight }}>Age {player.age}</span>}
+            </div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 8 }}>
+            <div style={{ fontWeight: 700, fontSize: 18, color: '#c45500' }}>{player.fc_value.toLocaleString()}</div>
+            {player.fc_trend !== 0 && <div style={{ fontSize: 11, color: trendColor }}>{player.fc_trend > 0 ? '▲' : '▼'} {Math.abs(Math.round(player.fc_trend))}</div>}
+          </div>
+        </div>
+        {worp != null && (
+          <div style={{ marginTop: 6, paddingTop: 6, borderTop: `1px solid ${C.border}`, display: 'flex', gap: 12 }}>
+            <div>
+              <span style={{ fontWeight: 700, fontSize: 13, color: TIER_CONFIG[getTier(worp)]?.color }}>{worp.toFixed(2)}</span>
+              <span style={{ fontSize: 10, color: C.textLight, marginLeft: 4 }}>WORP</span>
+            </div>
+            {player.fc_pos_rank && <div style={{ fontSize: 12, color: C.textLight }}>{player.pos}{player.fc_pos_rank}</div>}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
