@@ -1,6 +1,16 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+function useWindowWidth() {
+  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024);
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return width;
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -1297,6 +1307,57 @@ function PlayerRow({ player }) {
   const posColor = POS_COLOR[pos] || C.textMid;
   const posBg    = POS_BG[pos]   || '#f9fafb';
   const [hovered, setHovered] = useState(false);
+  const isMobile = useWindowWidth() < 640;
+
+  if (isMobile) {
+    return (
+      <div style={{
+        backgroundColor: C.white,
+        border: `1px solid ${C.border}`,
+        borderLeft: `3px solid ${posColor}`,
+        borderRadius: 6,
+        padding: '10px 12px',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+          <div>
+            <span style={{ fontWeight: 700, fontSize: 15, color: C.textDark }}>{name}</span>
+            <div style={{ display: 'flex', gap: 5, marginTop: 3, flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ backgroundColor: posBg, color: posColor, fontWeight: 700, fontSize: 11, padding: '1px 6px', borderRadius: 3 }}>{pos}{pos_rank ? ` #${pos_rank}` : ''}</span>
+              {team && <span style={{ fontSize: 12, color: C.textMid }}>{team}</span>}
+              <TierBadge label={tier_label} />
+            </div>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontWeight: 700, fontSize: 17, color: worp !== null ? (TIER_CONFIG[tier_label]?.color || C.textMid) : C.textLight }}>
+              {worp !== null ? worp.toFixed(2) : '—'}
+            </div>
+            <div style={{ fontSize: 10, color: C.textLight }}>WORP</div>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, paddingTop: 6, borderTop: `1px solid ${C.border}` }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.textDark }}>{ppg !== null ? ppg.toFixed(1) : '—'}</div>
+            <div style={{ fontSize: 10, color: C.textLight }}>PPG</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.textDark }}>{total_pts != null ? total_pts : '—'}</div>
+            <div style={{ fontSize: 10, color: C.textLight }}>Pts</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: fc_value != null ? '#c45500' : C.textLight }}>
+              {fc_value != null ? (fc_value >= 1000 ? `${(fc_value/1000).toFixed(1)}k` : fc_value) : '—'}
+            </div>
+            <div style={{ fontSize: 10, color: C.textLight }}>FC Value</div>
+          </div>
+        </div>
+        {(leagues || []).length > 0 && (
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+            {leagues.map(l => <span key={l} style={{ fontSize: 10, color: C.blue, backgroundColor: '#e8f4f8', borderRadius: 3, padding: '1px 6px' }}>{l}</span>)}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div
@@ -1305,7 +1366,6 @@ function PlayerRow({ player }) {
       style={{
         display: 'grid',
         gridTemplateColumns: '2fr 70px 60px 130px 70px 60px 70px 80px',
-
         gap: 10,
         alignItems: 'center',
         padding: '12px 16px',
@@ -1317,85 +1377,34 @@ function PlayerRow({ player }) {
         cursor: 'default',
       }}
     >
-      {/* Name */}
       <div>
         <div style={{ fontWeight: 700, color: C.textDark, marginBottom: 3 }}>{name}</div>
         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-          {(leagues || []).map(l => (
-            <span key={l} style={{
-              fontSize: 11,
-              color: C.blue,
-              backgroundColor: '#e8f4f8',
-              borderRadius: 3,
-              padding: '1px 6px',
-            }}>{l}</span>
-          ))}
+          {(leagues || []).map(l => <span key={l} style={{ fontSize: 11, color: C.blue, backgroundColor: '#e8f4f8', borderRadius: 3, padding: '1px 6px' }}>{l}</span>)}
         </div>
       </div>
-
-      {/* Pos */}
       <div style={{ textAlign: 'center' }}>
-        <span style={{
-          backgroundColor: posBg,
-          color: posColor,
-          fontWeight: 700,
-          fontSize: 12,
-          padding: '3px 8px',
-          borderRadius: 4,
-          display: 'inline-block',
-        }}>
-          {pos}
-        </span>
-        {pos_rank && (
-          <div style={{ fontSize: 11, color: C.textLight, marginTop: 2 }}>#{pos_rank}</div>
-        )}
+        <span style={{ backgroundColor: posBg, color: posColor, fontWeight: 700, fontSize: 12, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{pos}</span>
+        {pos_rank && <div style={{ fontSize: 11, color: C.textLight, marginTop: 2 }}>#{pos_rank}</div>}
       </div>
-
-      {/* Team */}
       <div style={{ color: C.textMid, textAlign: 'center', fontSize: 13 }}>{team}</div>
-
-      {/* Tier */}
       <div><TierBadge label={tier_label} /></div>
-
-      {/* WORP */}
       <div style={{ textAlign: 'right' }}>
         <div style={{ fontSize: 11, color: C.textLight, marginBottom: 1 }}>WORP</div>
-        <div style={{
-          fontWeight: 700,
-          fontSize: 16,
-          color: worp !== null ? (TIER_CONFIG[tier_label]?.color || C.textMid) : C.textLight,
-        }}>
-          {worp !== null ? worp.toFixed(2) : '—'}
-        </div>
+        <div style={{ fontWeight: 700, fontSize: 16, color: worp !== null ? (TIER_CONFIG[tier_label]?.color || C.textMid) : C.textLight }}>{worp !== null ? worp.toFixed(2) : '—'}</div>
       </div>
-
-      {/* PPG */}
       <div style={{ textAlign: 'right' }}>
         <div style={{ fontSize: 11, color: C.textLight, marginBottom: 1 }}>PPG</div>
-        <div style={{ fontWeight: 700, fontSize: 16, color: C.textDark }}>
-          {ppg !== null ? ppg.toFixed(1) : '—'}
-        </div>
+        <div style={{ fontWeight: 700, fontSize: 16, color: C.textDark }}>{ppg !== null ? ppg.toFixed(1) : '—'}</div>
       </div>
-
-      {/* Total Points */}
       <div style={{ textAlign: 'right' }}>
         <div style={{ fontSize: 11, color: C.textLight, marginBottom: 1 }}>Pts</div>
-        <div style={{ fontWeight: 700, fontSize: 15, color: total_pts != null ? C.textDark : C.textLight }}>
-          {total_pts != null ? total_pts : '—'}
-        </div>
+        <div style={{ fontWeight: 700, fontSize: 15, color: total_pts != null ? C.textDark : C.textLight }}>{total_pts != null ? total_pts : '—'}</div>
       </div>
-
-      {/* FantasyCalc Dynasty Value */}
       <div style={{ textAlign: 'right' }}>
         <div style={{ fontSize: 11, color: C.textLight, marginBottom: 1 }}>FC Value</div>
-        <div style={{ fontWeight: 700, fontSize: 15, color: fc_value != null ? '#c45500' : C.textLight }}>
-          {fc_value != null ? fc_value.toLocaleString() : '—'}
-        </div>
-        {fc_trend != null && fc_trend !== 0 && (
-          <div style={{ fontSize: 10, color: fc_trend > 0 ? C.green : C.red }}>
-            {fc_trend > 0 ? '▲' : '▼'} {Math.abs(Math.round(fc_trend))}
-          </div>
-        )}
+        <div style={{ fontWeight: 700, fontSize: 15, color: fc_value != null ? '#c45500' : C.textLight }}>{fc_value != null ? fc_value.toLocaleString() : '—'}</div>
+        {fc_trend != null && fc_trend !== 0 && <div style={{ fontSize: 10, color: fc_trend > 0 ? C.green : C.red }}>{fc_trend > 0 ? '▲' : '▼'} {Math.abs(Math.round(fc_trend))}</div>}
       </div>
     </div>
   );
@@ -1595,7 +1604,7 @@ function LeagueStandingsView({ standings, myUserId }) {
           <div className="table-scroll">
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '36px 1fr 100px 90px 1fr 80px', minWidth: 580,
+            gridTemplateColumns: '36px 1fr 100px 90px 1fr 80px', 
             gap: 10, padding: '6px 16px',
             fontSize: 11, fontWeight: 700, color: C.textMid, textTransform: 'uppercase', letterSpacing: 0.5,
           }}>
@@ -1624,7 +1633,7 @@ function LeagueStandingsView({ standings, myUserId }) {
                     onClick={() => setExpandedTeam(expanded ? null : key)}
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: '36px 1fr 100px 90px 1fr 80px', minWidth: 580,
+                      gridTemplateColumns: '36px 1fr 100px 90px 1fr 80px', 
                       gap: 10, alignItems: 'center',
                       padding: '13px 16px',
                       backgroundColor: isMe ? '#fffbf0' : C.white,
@@ -2126,8 +2135,8 @@ function FCValueWORPChart({ players, rosterByName }) {
         </button>
       </div>
 
-      <div style={{ overflowX: 'auto' }}>
-        <svg width={W} height={H} style={{ display: 'block', maxWidth: '100%' }}>
+      
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', width: '100%', height: 'auto' }}>
           {/* Quadrant shading */}
           <rect x={PAD.left} y={PAD.top} width={midX - PAD.left} height={midY - PAD.top} fill="#f0fdf4" opacity={0.5} />
           <rect x={midX} y={PAD.top} width={W - PAD.right - midX} height={midY - PAD.top} fill="#fffbf0" opacity={0.6} />
@@ -2212,7 +2221,6 @@ function FCValueWORPChart({ players, rosterByName }) {
             );
           })()}
         </svg>
-      </div>
     </div>
   );
 }
@@ -2377,8 +2385,8 @@ function WORPChart({ players, rosterNameSet }) {
       </div>
 
       {/* SVG chart */}
-      <div style={{ overflowX: 'auto' }}>
-        <svg width={W} height={H} style={{ display: 'block', maxWidth: '100%' }}>
+      
+        <svg viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', width: '100%', height: 'auto' }}>
 
           {/* Grid lines */}
           {yTicks.map(v => (
@@ -2502,12 +2510,13 @@ function WORPChart({ players, rosterNameSet }) {
             );
           })()}
         </svg>
-      </div>
     </div>
   );
 }
 
 function TableHeader({ showRank }) {
+  const w = useWindowWidth();
+  if (w < 640) return null; // cards on mobile — no header needed
   return (
     <div style={{
       display: 'grid',
@@ -2553,6 +2562,54 @@ function LeaderboardRow({ player, onRoster }) {
   const posColor = POS_COLOR[pos] || C.textMid;
   const posBg    = POS_BG[pos]   || '#f9fafb';
   const [hovered, setHovered] = useState(false);
+  const isMobile = useWindowWidth() < 640;
+
+  if (isMobile) {
+    return (
+      <div style={{
+        backgroundColor: onRoster ? '#f0fdf4' : C.white,
+        border: `1px solid ${onRoster ? '#86efac' : C.border}`,
+        borderLeft: `3px solid ${posColor}`,
+        borderRadius: 6,
+        padding: '10px 12px',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+              <span style={{ fontWeight: 700, color: rank <= 10 ? C.orange : C.textMid, fontSize: 12, minWidth: 24 }}>#{rank}</span>
+              <span style={{ fontWeight: 700, fontSize: 15, color: C.textDark }}>{name}</span>
+              {onRoster && <span style={{ fontSize: 10, backgroundColor: '#dcfce7', color: '#15803d', border: '1px solid #86efac', borderRadius: 10, padding: '1px 6px', fontWeight: 600 }}>Owned</span>}
+            </div>
+            <div style={{ display: 'flex', gap: 5, marginTop: 3, alignItems: 'center' }}>
+              <span style={{ backgroundColor: posBg, color: posColor, fontWeight: 700, fontSize: 11, padding: '1px 6px', borderRadius: 3 }}>{pos}{pos_rank ? ` #${pos_rank}` : ''}</span>
+              {team && <span style={{ fontSize: 12, color: C.textMid }}>{team}</span>}
+              <TierBadge label={tier_label} />
+            </div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0, marginLeft: 8 }}>
+            <div style={{ fontWeight: 700, fontSize: 17, color: TIER_CONFIG[tier_label]?.color || C.textMid }}>{worp.toFixed(2)}</div>
+            <div style={{ fontSize: 10, color: C.textLight }}>WORP</div>
+          </div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, paddingTop: 6, borderTop: `1px solid ${C.border}` }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.textDark }}>{ppg != null ? ppg.toFixed(1) : '—'}</div>
+            <div style={{ fontSize: 10, color: C.textLight }}>PPG</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.textDark }}>{total_pts != null ? total_pts : '—'}</div>
+            <div style={{ fontSize: 10, color: C.textLight }}>Pts</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: fc_value != null ? '#c45500' : C.textLight }}>
+              {fc_value != null ? (fc_value >= 1000 ? `${(fc_value/1000).toFixed(1)}k` : fc_value) : '—'}
+            </div>
+            <div style={{ fontSize: 10, color: C.textLight }}>FC Value</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -2564,95 +2621,40 @@ function LeaderboardRow({ player, onRoster }) {
         gap: 10,
         alignItems: 'center',
         padding: '11px 16px',
-        backgroundColor: onRoster
-          ? (hovered ? '#d1fae5' : '#f0fdf4')
-          : (hovered ? '#f0f8ff' : C.white),
+        backgroundColor: onRoster ? (hovered ? '#d1fae5' : '#f0fdf4') : (hovered ? '#f0f8ff' : C.white),
         border: `1px solid ${onRoster ? '#86efac' : (hovered ? '#c8e6f9' : C.border)}`,
         borderRadius: 6,
         fontSize: 14,
         transition: 'background 0.1s, border-color 0.1s',
       }}
     >
-      {/* Rank */}
-      <div style={{ textAlign: 'center', fontWeight: 700, color: rank <= 10 ? C.orange : C.textLight, fontSize: 13 }}>
-        {rank}
-      </div>
-
-      {/* Name */}
+      <div style={{ textAlign: 'center', fontWeight: 700, color: rank <= 10 ? C.orange : C.textLight, fontSize: 13 }}>{rank}</div>
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span style={{ fontWeight: 700, color: C.textDark }}>{name}</span>
-          {onRoster && (
-            <span style={{
-              fontSize: 10,
-              backgroundColor: '#dcfce7',
-              color: '#15803d',
-              border: '1px solid #86efac',
-              borderRadius: 10,
-              padding: '1px 7px',
-              fontWeight: 600,
-            }}>On Roster</span>
-          )}
+          {onRoster && <span style={{ fontSize: 10, backgroundColor: '#dcfce7', color: '#15803d', border: '1px solid #86efac', borderRadius: 10, padding: '1px 7px', fontWeight: 600 }}>On Roster</span>}
         </div>
-        {pos_rank && (
-          <div style={{ fontSize: 11, color: C.textLight, marginTop: 1 }}>{pos}#{pos_rank} overall</div>
-        )}
+        {pos_rank && <div style={{ fontSize: 11, color: C.textLight, marginTop: 1 }}>{pos}#{pos_rank} overall</div>}
       </div>
-
-      {/* Pos */}
-      <div style={{ textAlign: 'center' }}>
-        <span style={{
-          backgroundColor: posBg,
-          color: posColor,
-          fontWeight: 700,
-          fontSize: 12,
-          padding: '3px 8px',
-          borderRadius: 4,
-          display: 'inline-block',
-        }}>{pos}</span>
-      </div>
-
-      {/* Team */}
+      <div style={{ textAlign: 'center' }}><span style={{ backgroundColor: posBg, color: posColor, fontWeight: 700, fontSize: 12, padding: '3px 8px', borderRadius: 4, display: 'inline-block' }}>{pos}</span></div>
       <div style={{ color: C.textMid, textAlign: 'center', fontSize: 13 }}>{team || 'FA'}</div>
-
-      {/* Tier */}
       <div><TierBadge label={tier_label} /></div>
-
-      {/* WORP */}
       <div style={{ textAlign: 'right' }}>
         <div style={{ fontSize: 11, color: C.textLight, marginBottom: 1 }}>WORP</div>
-        <div style={{ fontWeight: 700, fontSize: 16, color: TIER_CONFIG[tier_label]?.color || C.textMid }}>
-          {worp.toFixed(2)}
-        </div>
+        <div style={{ fontWeight: 700, fontSize: 16, color: TIER_CONFIG[tier_label]?.color || C.textMid }}>{worp.toFixed(2)}</div>
       </div>
-
-      {/* PPG */}
       <div style={{ textAlign: 'right' }}>
         <div style={{ fontSize: 11, color: C.textLight, marginBottom: 1 }}>PPG</div>
-        <div style={{ fontWeight: 700, fontSize: 16, color: C.textDark }}>
-          {ppg != null ? ppg.toFixed(1) : '—'}
-        </div>
+        <div style={{ fontWeight: 700, fontSize: 16, color: C.textDark }}>{ppg != null ? ppg.toFixed(1) : '—'}</div>
       </div>
-
-      {/* Total Points */}
       <div style={{ textAlign: 'right' }}>
         <div style={{ fontSize: 11, color: C.textLight, marginBottom: 1 }}>Pts</div>
-        <div style={{ fontWeight: 700, fontSize: 15, color: total_pts != null ? C.textDark : C.textLight }}>
-          {total_pts != null ? total_pts : '—'}
-        </div>
+        <div style={{ fontWeight: 700, fontSize: 15, color: total_pts != null ? C.textDark : C.textLight }}>{total_pts != null ? total_pts : '—'}</div>
       </div>
-
-      {/* FantasyCalc Dynasty Value */}
       <div style={{ textAlign: 'right' }}>
         <div style={{ fontSize: 11, color: C.textLight, marginBottom: 1 }}>FC Value</div>
-        <div style={{ fontWeight: 700, fontSize: 15, color: fc_value != null ? '#c45500' : C.textLight }}>
-          {fc_value != null ? fc_value.toLocaleString() : '—'}
-        </div>
-        {fc_trend != null && fc_trend !== 0 && (
-          <div style={{ fontSize: 10, color: fc_trend > 0 ? C.green : C.red }}>
-            {fc_trend > 0 ? '▲' : '▼'} {Math.abs(Math.round(fc_trend))}
-          </div>
-        )}
+        <div style={{ fontWeight: 700, fontSize: 15, color: fc_value != null ? '#c45500' : C.textLight }}>{fc_value != null ? fc_value.toLocaleString() : '—'}</div>
+        {fc_trend != null && fc_trend !== 0 && <div style={{ fontSize: 10, color: fc_trend > 0 ? C.green : C.red }}>{fc_trend > 0 ? '▲' : '▼'} {Math.abs(Math.round(fc_trend))}</div>}
       </div>
     </div>
   );
